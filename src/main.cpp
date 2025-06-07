@@ -23,7 +23,7 @@ void calculation_plain(const std::vector<int>& arr, int& sum_rare, int& sum_comm
     sum_rare = 0;
     sum_common = 0;
     for (size_t i = 0; i < arr.size(); ++i) {
-        if (i % 1000 == 0) {  // Редкое условие
+        if ((arr[i] & 0x3E8) == 0) {  // Редкое условие
             sum_rare += arr[i];
         } else {              // Частое условие
             sum_common += arr[i];
@@ -50,7 +50,7 @@ void calculation_optimized(const std::vector<int>& arr, int& sum_rare, int& sum_
     sum_rare = 0;
     sum_common = 0;
     for (size_t i = 0; i < arr.size(); ++i) {
-        if (i % 1000 == 0) [[unlikely]] {  // Подсказываем, что это маловероятно
+        if ((arr[i] & 0x3E8) == 0) [[unlikely]] {  // Подсказываем, что это маловероятно
             sum_rare += arr[i];
         } else [[likely]] {                // Основная ветка
             sum_common += arr[i];
@@ -63,7 +63,7 @@ void calculation_misoptimized(const std::vector<int>& arr, int& sum_rare, int& s
     sum_rare = 0;
     sum_common = 0;
     for (size_t i = 0; i < arr.size(); ++i) {
-        if (i % 1000 == 0) [[likely]] {  // ОШИБКА: говорим, что это вероятно (хотя на самом деле нет)
+        if ((arr[i] & 0x3E8) == 0) [[likely]] {  // ОШИБКА: говорим, что это вероятно (хотя на самом деле нет)
             sum_rare += arr[i];
         } else [[unlikely]] {
             sum_common += arr[i];
