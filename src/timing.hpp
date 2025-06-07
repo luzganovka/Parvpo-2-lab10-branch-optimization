@@ -11,8 +11,8 @@ int write_time_to_csv(
     ){
     const std::string csv_filename = "timings.csv";
     const std::string sep = ",";
-    const std::vector<std::string> optimizations = {"O0", "O1", "O2", "O3", "Oz"};
-    const size_t opt_num = optimizations.size();
+    // const std::vector<std::string> optimizations = {"O0", "O1", "O2", "O3", "Oz"};
+    // const size_t opt_num = optimizations.size();
 
     std::ofstream csv_file(csv_filename, std::ios::app);
     if (!csv_file.is_open()) {

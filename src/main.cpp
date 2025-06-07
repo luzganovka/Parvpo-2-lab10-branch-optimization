@@ -31,23 +31,28 @@ void calculation_plain(const std::vector<int>& arr, int& sum_rare, int& sum_comm
     }
 }
 
-// Включим макросы для подсказок ветвления (если компилятор поддерживает)
-#if (defined(__GNUC__) && (__GNUC__ >= 3)) || (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 800)) || defined(__clang__)
-#  define likely(expr)    (__builtin_expect((expr), 1))
-#  define unlikely(expr)  (__builtin_expect((expr), 0))
-#else
-#  define likely(expr)    (expr)
-#  define unlikely(expr)  (expr)
-#endif
+// // Включим макросы для подсказок ветвления (если компилятор поддерживает)
+// #if (defined(__GNUC__) && (__GNUC__ >= 3)) || (defined(__INTEL_COMPILER) && (__INTEL_COMPILER >= 800)) || defined(__clang__)
+// #  define expect(expr,value)    (__builtin_expect ((expr),(value)) )
+// #else
+// #  define expect(expr,value)    (expr)
+// #endif
+
+// #ifndef likely
+// #define likely(expr)     expect((expr) != 0, 1)
+// #endif
+// #ifndef unlikely
+// #define unlikely(expr)   expect((expr) != 0, 0)
+// #endif
 
 // Переопределенная функция с оптимизацией ветвлений
 void calculation_optimized(const std::vector<int>& arr, int& sum_rare, int& sum_common) {
     sum_rare = 0;
     sum_common = 0;
     for (size_t i = 0; i < arr.size(); ++i) {
-        if (unlikely(i % 1000 == 0)) {  // Подсказываем, что это маловероятно
+        if (i % 1000 == 0) [[unlikely]] {  // Подсказываем, что это маловероятно
             sum_rare += arr[i];
-        } else {                        // Основная ветка
+        } else [[likely]] {                // Основная ветка
             sum_common += arr[i];
         }
     }
@@ -58,9 +63,9 @@ void calculation_misoptimized(const std::vector<int>& arr, int& sum_rare, int& s
     sum_rare = 0;
     sum_common = 0;
     for (size_t i = 0; i < arr.size(); ++i) {
-        if (likely(i % 1000 == 0)) {  // ОШИБКА: говорим, что это вероятно (хотя на самом деле нет)
+        if (i % 1000 == 0) [[likely]] {  // ОШИБКА: говорим, что это вероятно (хотя на самом деле нет)
             sum_rare += arr[i];
-        } else {
+        } else [[unlikely]] {
             sum_common += arr[i];
         }
     }
@@ -78,20 +83,21 @@ double measure_performance(
         int statistics_num
     ) {
 
-    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> total_elapsed;
+    
     for (int i = 0; i < statistics_num; i++){
 
         auto arr = generate_random_array(array_size);
         int sum_rare, sum_common;
+
+        auto start = std::chrono::high_resolution_clock::now();
         calculation(arr, sum_rare, sum_common);
+        auto end = std::chrono::high_resolution_clock::now();
 
+        total_elapsed += end - start;
     }
-    auto end = std::chrono::high_resolution_clock::now();
-   
-    std::chrono::duration<double> total_elapsed = end - start;
-    double average_time = total_elapsed.count() / statistics_num;
-
-    return average_time;
+    
+    return double(total_elapsed.count() / statistics_num);
 }
 
 int measure_and_write (
