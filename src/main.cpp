@@ -2,6 +2,9 @@
 #include <vector>
 #include <chrono>
 #include <random>
+#include <functional>
+
+#include "timing.hpp"
 
 // Заполнение массива случайными числами
 std::vector<int> generate_random_array(size_t size) {
@@ -28,6 +31,50 @@ void calculation_plain(const std::vector<int>& arr, int& sum_rare, int& sum_comm
     }
 }
 
+/**
+* @brief Тестирует производительность функции, вызывая её multiple_times раз.
+* @param func Функция для тестирования (обёрнутая в std::function).
+* @param multiple_times Количество повторений.
+* @return Среднее время выполнения одного вызова в секундах.
+*/
+double measure_performance(
+        std::function<void(const std::vector<int>&, int&, int&)> calculation,
+        size_t array_size,
+        int statistics_num
+    ) {
+
+    auto start = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < statistics_num; i++){
+
+        auto arr = generate_random_array(array_size);
+        int sum_rare, sum_common;
+        calculation(arr, sum_rare, sum_common);
+
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+   
+    std::chrono::duration<double> total_elapsed = end - start;
+    double average_time = total_elapsed.count() / statistics_num;
+
+    return average_time;
+}
+
+int measure_and_write (
+    std::function<void(const std::vector<int>&, int&, int&)> calculation,
+    size_t array_size,
+    int statistics_num,
+    const std::string name,
+    const std::string keyword
+) {
+
+    std::cout << "Измеряется" << name << keyword << "...\n";
+
+    return write_time_to_csv(
+        name,
+        keyword,
+        measure_performance(calculation, array_size, statistics_num)
+    );
+}
 
 int main(const int argc, const char* const argv[]) {
     
@@ -45,17 +92,13 @@ int main(const int argc, const char* const argv[]) {
         return 1;
     }
 
-    auto arr = generate_random_array(array_size);
-
-    int sum_rare, sum_common;
-    auto start = std::chrono::high_resolution_clock::now();
-    calculation_plain(arr, sum_rare, sum_common);
-    auto end = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Sum rare (every 1000th): " << sum_rare << "\n";   // чтобы результат был использован
-    std::cout << "Sum common (others): " << sum_common << "\n";     // чтобы результат был использован
-    std::cout << "Elapsed time: " << elapsed.count() << " seconds\n";
+    measure_and_write(
+        calculation_plain,
+        array_size,
+        statistics_num,
+        "calculaton",
+        "plain"
+    );
 
     return 0;
 }
